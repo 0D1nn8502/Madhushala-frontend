@@ -14,6 +14,12 @@ interface UserInfo {
   error?: string; 
 }
 
+interface decodedInfo {
+  name: string; 
+  email: string; 
+  picture: string; 
+}
+
 
 export const Landing = () => { 
   const navigate = useNavigate(); 
@@ -25,7 +31,7 @@ export const Landing = () => {
 
   const handleGoogleLoginSuccess = async (credentialResponse: any) => {
     try {
-      const decoded = jwtDecode(credentialResponse.credential);
+      const decoded = jwtDecode(credentialResponse.credential) as decodedInfo;
       const newUser = {
         username: decoded.name,
         email: decoded.email,

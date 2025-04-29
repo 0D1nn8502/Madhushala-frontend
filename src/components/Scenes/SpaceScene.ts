@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 import axios from 'axios';
-import elementUrls from '../../config/elementUrls';
 
 export class SpaceScene extends Phaser.Scene {
     private apiUrl: string = '';
@@ -94,7 +93,7 @@ export class SpaceScene extends Phaser.Scene {
         });
 
         // 4) On release, either save it or toss it: // 
-        this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
+        this.input.on('pointerup', () => {
             if (!this.currentDragSprite) return;
 
             const x = this.currentDragSprite.x;

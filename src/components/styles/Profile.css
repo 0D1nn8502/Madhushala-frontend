@@ -1,0 +1,15 @@
+
+
+.image-container img {
+    height: 150px; 
+    width: 150px; 
+}
+
+
+Link {
+    color: bisque;
+}
+
+Link :active {
+    color: brown; 
+}

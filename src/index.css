@@ -1,0 +1,27 @@
+
+
+/* Avatar selector styling */
+.avatarDisplay {
+  background-color: black;
+  margin-top: 35px; 
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+.avatarDisplay h2 {
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.avatarOption :hover {
+  transform: scale(1.5); /* Enlarges the image slightly when selected */
+}

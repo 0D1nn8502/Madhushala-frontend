@@ -5,8 +5,8 @@
       "destination": "/index.html"
     }
   ],
-  "buildCommand": "npm install && npm run build",
+  "buildCommand": "npm install --include=optional && npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
-  "installCommand": "npm install"
+  "installCommand": "npm install --include=optional"
 } 

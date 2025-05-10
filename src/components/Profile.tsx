@@ -76,9 +76,9 @@ export const Profile: React.FC = () => {
     return <div> Loading profile ...  </div>
   }
 
-  function changeProfilePic() {
-    console.log("Want to change Pic");
-  }
+  // function changeProfilePic() {
+  //   console.log("Want to change Pic");
+  // }
 
   async function createSpace () {
 
@@ -108,9 +108,9 @@ export const Profile: React.FC = () => {
 
   }
 
-  async function changeDescription () {
+  // async function changeDescription () {
     
-  }
+  // }
 
 
   async function joinSpace(spaceId:string) {
@@ -154,44 +154,44 @@ export const Profile: React.FC = () => {
     
   }
 
-  async function editSpace(spaceId:string) { 
-    try {
-      const token = localStorage.getItem('token'); 
+  // async function editSpace(spaceId:string) { 
+  //   try {
+  //     const token = localStorage.getItem('token'); 
       
-      const res = await axios.get(
-        `${API_URL}/space/join/${spaceId}`, 
-        {
-          headers: {
-            Authorization: `Bearer ${token}`, 
-          } 
-        }
-      )
+  //     const res = await axios.get(
+  //       `${API_URL}/space/join/${spaceId}`, 
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`, 
+  //         } 
+  //       }
+  //     )
 
-      const spaceData = res.data; 
+  //     const spaceData = res.data; 
       
-      const elemres = await axios.get(`${API_URL}/space/elements`, {
-        headers: {Authorization: `Bearer ${token}`} 
-      }); 
-      const elements = elemres.data as Array<{
-        _id: string; 
-        name: string; 
-        imageUrl: string; 
-        scale?: number;
-      }>; 
+  //     const elemres = await axios.get(`${API_URL}/space/elements`, {
+  //       headers: {Authorization: `Bearer ${token}`} 
+  //     }); 
+  //     const elements = elemres.data as Array<{
+  //       _id: string; 
+  //       name: string; 
+  //       imageUrl: string; 
+  //       scale?: number;
+  //     }>; 
 
-      // Navigate with space and element data (can be made better) // 
-      navigate(`/edit/${spaceId}`, {
-        state: {
-          spaceData: spaceData, 
-          elements: elements 
-        }
-      })
+  //     // Navigate with space and element data (can be made better) // 
+  //     navigate(`/edit/${spaceId}`, {
+  //       state: {
+  //         spaceData: spaceData, 
+  //         elements: elements 
+  //       }
+  //     })
 
-    } catch (error) {
-      console.error("Spacedata not found"); 
-      navigate('/profile'); 
-    }
-  }
+  //   } catch (error) {
+  //     console.error("Spacedata not found"); 
+  //     navigate('/profile'); 
+  //   }
+  // }
 
 
   async function deleteSpace(spaceId:string, spaceName:string) {

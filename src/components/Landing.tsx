@@ -16,15 +16,12 @@ interface UserInfo {
 }
 
 interface decodedInfo {
-  _id: string; 
-  username: string; 
-  image: string; 
-  avatar?: string; 
-  description: string; 
-  spaces?: Array<{spaceId: string; spaceName: string}>;  
+ name: string; 
+ email: string; 
+ picture: string;  
 }
 
-
+ 
 export const Landing = () => { 
   const navigate = useNavigate(); 
   const [mode, setMode] = useState<"google" | "signup" | "signin">("google");

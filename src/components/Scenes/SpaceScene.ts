@@ -164,7 +164,7 @@ export class SpaceScene extends Phaser.Scene {
         // Logic to save the space to the database // 
         const token = localStorage.getItem('token');
         try {
-            const response = await axios.post(`${this.apiUrl}/space/create`, {
+            await axios.post(`${this.apiUrl}/space/create`, {
                 name: spaceName,
                 spaceElements: this.placedProps
             }, {

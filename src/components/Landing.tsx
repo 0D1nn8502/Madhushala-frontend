@@ -24,7 +24,7 @@ interface decodedInfo {
  
 export const Landing = () => { 
   const navigate = useNavigate(); 
-  const [mode, setMode] = useState<"google" | "signup" | "signin">("google");
+  const [mode, setMode] = useState<"google" | "signup" | "signin">("signin");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

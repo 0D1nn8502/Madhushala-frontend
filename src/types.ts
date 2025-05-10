@@ -6,6 +6,7 @@ export interface JoinParams {
 }
 
 export type User = {
+    _id: string,
     username : string, 
     spaces : string[], 
     description : string, 

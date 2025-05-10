@@ -5,6 +5,16 @@
     width: 150px; 
 }
 
+.descriptionContainer{
+    margin-bottom: 50px; 
+}
+
+
+
+.spacesContainer {
+    display: flex; 
+    text-decoration: solid; 
+}
 
 Link {
     color: bisque;

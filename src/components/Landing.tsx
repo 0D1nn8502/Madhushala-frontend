@@ -6,6 +6,7 @@ import "./styles/Landing.css";
 import { useNavigate } from "react-router-dom";
 import { User } from "../types"; 
 
+const API_URL = import.meta.env.VITE_REACT_APP_API_URL; 
 
 // User profile info returned after signup/signin // 
 interface UserInfo {
@@ -15,9 +16,12 @@ interface UserInfo {
 }
 
 interface decodedInfo {
-  name: string; 
-  email: string; 
-  picture: string; 
+  _id: string; 
+  username: string; 
+  image: string; 
+  avatar?: string; 
+  description: string; 
+  spaces?: Array<{spaceId: string; spaceName: string}>;  
 }
 
 
@@ -48,7 +52,7 @@ export const Landing = () => {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await axios.post(`${import.meta.env.VITE_REACT_APP_API_URL}/auth/signup`, {
+      const response = await axios.post(`${API_URL}/auth/signup`, {
         username,
         email,
         password
@@ -62,7 +66,7 @@ export const Landing = () => {
   const handleSignin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await axios.post(`${import.meta.env.VITE_REACT_APP_API_URL}/auth/signin`, {
+      const response = await axios.post(`${API_URL}/auth/signin`, {
         username,
         password
       });
@@ -76,7 +80,7 @@ export const Landing = () => {
     if (data.token && data.user) {
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
-      navigate('/profile');
+      navigate(`/profile`); 
     }
   };
 

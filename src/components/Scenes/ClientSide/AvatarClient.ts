@@ -1,4 +1,3 @@
-// client/AvatarClient.ts
 import Phaser from 'phaser';
 
 export interface AvatarOptions {
@@ -21,55 +20,56 @@ export class AvatarClient {
     this.ws     = opts.ws;
     this.userId = opts.userId;
 
-    // 1️⃣ Create your sprite
+    // Sprite created // 
     this.sprite = opts.scene.add
       .sprite(opts.startX, opts.startY, opts.spriteKey)
       .setScale(0.5);
 
-    // 2️⃣ Hook input
+    // Hook input // 
     this.cursors = opts.scene.input.keyboard!.createCursorKeys();
   }
 
   update() {
-    let moved = false;
+    let moved = false;  
+    let dir : 'up' | 'down' | 'left' | 'right' = 'up';  
     const speed = 200;
-    const dt    = this.sprite.scene.game.loop.delta / 1000;
+    const dt = this.sprite.scene.game.loop.delta / 1000;
 
     if (this.cursors.left?.isDown) {
-      this.sprite.x -= speed * dt; moved = true;
+      this.sprite.x -= speed * dt; moved = true; dir = 'left'; 
       this.sprite.play('left',  true);
     } else if (this.cursors.right?.isDown) {
-      this.sprite.x += speed * dt; moved = true;
+      this.sprite.x += speed * dt; moved = true; dir = 'right'; 
       this.sprite.play('right', true);
     } else if (this.cursors.up?.isDown) {
-      this.sprite.y -= speed * dt; moved = true;
-      this.sprite.play('up',    true);
+      this.sprite.y -= speed * dt; moved = true; dir = 'up'; 
+      this.sprite.play('up', true);
     } else if (this.cursors.down?.isDown) {
-      this.sprite.y += speed * dt; moved = true;
+      this.sprite.y += speed * dt; moved = true; dir = 'down'; 
       this.sprite.play('down',  true);
     } else {
       this.sprite.play('idle',  true);
     }
 
-    // 3️⃣ Send move only if socket is OPEN and we actually moved
+    // Send move only if socket is OPEN and we actually moved // 
     if (
       moved &&
       this.ws.readyState === WebSocket.OPEN
     ) {
       this.ws.send(
         JSON.stringify({
-          type:   'move',         // matches server's WSMsg
+          type:   'move',         // must match server's WSMsg // 
           userId: this.userId,
           x:      this.sprite.x,
-          y:      this.sprite.y
+          y:      this.sprite.y, 
+          dir 
         })
       );
     }
   }
-
   
   destroy() {
-    // Only destroy sprite; do NOT close the shared WebSocket here
+    // Only destroy sprite; DONT close the shared WebSocket //  
     this.sprite.destroy();
   }
 }

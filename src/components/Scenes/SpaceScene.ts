@@ -3,9 +3,8 @@ import axios from 'axios';
 
 export class SpaceScene extends Phaser.Scene {
     private apiUrl: string = '';
-    private spaceData: any; 
-
-    private placedProps: Array<{ elementName: string, elementId: string; x: number; y: number }> = []; //Convert to ObjectId at backend // 
+    
+    private placedProps: Array<{ elementName: string, elementId: string; x: number; y: number; link?: string;}> = []; // Convert to ObjectId at backend // 
 
     private palette!: Phaser.GameObjects.Container;
     private currentDragSprite: Phaser.GameObjects.Image | null = null;
@@ -19,14 +18,12 @@ export class SpaceScene extends Phaser.Scene {
 
     init(data: any) {
         this.apiUrl = data.apiUrl;
-        this.spaceData = data; 
+        this.elements = data.elements;  
     }
 
-    async preload() {
+    preload() {
 
         this.load.image('grass', 'https://madhushala-bucket.s3.ap-south-1.amazonaws.com/tiles/Grass1.png');
-
-        await this.fetchElements();
 
         this.elements.forEach(element => {
             this.load.image(element.name, element.imageUrl); // Load each image using the elementId and imageUrl
@@ -34,15 +31,12 @@ export class SpaceScene extends Phaser.Scene {
 
     }
 
-    async create() {
-        // Fetch available props //  
-        await this.fetchElements();
+    create() {
 
         this.add.tileSprite(0, 0, 1500, 1500, "grass").setOrigin(0, 0);
 
         // Selector // 
         this.palette = this.add.container(1100, 200);
-
 
         // Add fetched props to palette // 
         this.elements.forEach((element, index) => {
@@ -56,7 +50,6 @@ export class SpaceScene extends Phaser.Scene {
             propImage.setData('name', element.name);
             this.palette.add(propImage);
         });
-
 
         // Drag n Drop functionality // 
         this.input.on('gameobjectdown', (pointer: Phaser.Input.Pointer, obj: Phaser.GameObjects.Image) => {
@@ -80,7 +73,7 @@ export class SpaceScene extends Phaser.Scene {
                 const elementId = obj.getData('elementId');
                 const elementName = obj.getData('name');
                 this.currentDragSprite.setData('elementId', elementId);
-                this.currentDragSprite.setData('name', elementName);
+                this.currentDragSprite.setData('name', elementName); 
             }
         });
 
@@ -98,19 +91,35 @@ export class SpaceScene extends Phaser.Scene {
 
             const x = this.currentDragSprite.x;
             const y = this.currentDragSprite.y;
+
             // check your world bounds (0–1500 here): // 
             if (x >= 0 && x <= 1500 && y >= 0 && y <= 1500) {
 
                 const elementId = this.currentDragSprite.getData('elementId');
 
-                const elementName = this.currentDragSprite.getData('name');
+                const elementName = this.currentDragSprite.texture.key as string; 
 
-                this.placedProps.push({
+                // If its a signboard, ask for link // 
+
+                let link: string | undefined; 
+
+                const newProp: any = {
                     elementName,
                     elementId,
                     x,
                     y
-                });
+                };
+
+                if (elementName === 'Signboard') {
+                  const input = prompt('Enter a URL for this signboard');
+                  if (input) {
+                    newProp.link = input;
+                  }
+                } 
+
+                console.log(link); 
+
+                this.placedProps.push(newProp); 
 
                 // Increment the appropriate counter
                 if (this.currentDragSprite.texture.key === 'greenTree') {
@@ -145,32 +154,7 @@ export class SpaceScene extends Phaser.Scene {
     }
 
     goBack() {
-
-        // Back to profile using the navigate function from spaceData
-        if (this.spaceData && this.spaceData.navigate) {
-            this.spaceData.navigate('/profile');
-        } else {
-            // Fallback to window.location if navigate function is not available
-            window.location.href = '/profile';
-        }
-    }
-
-    async fetchElements() {
-
-        const token = localStorage.getItem('token');
-
-        try {
-            const response = await axios.get(`${this.apiUrl}/space/elements`, {
-                headers: {
-                    "Authorization": `Bearer ${token}`
-                }
-            });
-
-            this.elements = response.data;
-
-        } catch (error) {
-            console.error("Error fetching elements:", error);
-        }
+        window.location.href = '/profile'; 
     }
 
     async saveSpace() {
@@ -189,11 +173,6 @@ export class SpaceScene extends Phaser.Scene {
                     "Authorization": `Bearer ${token}`
                 }
             });
-
-            // Call the callback function if it exists
-            if (this.spaceData && this.spaceData.onSpaceCreated) {
-                this.spaceData.onSpaceCreated(response.data);
-            }
 
             this.goBack();
 

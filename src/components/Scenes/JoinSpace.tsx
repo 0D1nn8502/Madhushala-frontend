@@ -1,55 +1,104 @@
-// Spaces within spaces : A house interior within a space with some props in it : levels of space data? // 
-
-import { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Phaser from 'phaser';
-import joinedGameConfig from './JoinedGameConfig';
-import { useSpace } from '../../context/SpaceContext';
-import { useNavigate, useParams } from 'react-router-dom';
+import axios from 'axios';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import joinedGameConfig from './JoinedGameConfig';  
+import { SpaceElement } from './JoinedSpace'; 
 
-const JoinedSpace: React.FC = () => {
+const API_URL = import.meta.env.VITE_REACT_APP_API_URL;
 
-    const {spaceData} = useSpace(); 
-    const navigate = useNavigate();
-    const { spaceId } = useParams<{ spaceId: string }>();
-    
-    useEffect(() => {
-      if (!spaceId) {
-        console.error("No space ID provided");
-        navigate('/profile');
-        return;
-      }
+interface Element {
+  _id: string; 
+  name: string; 
+  imageUrl: string; 
+  scale?: number 
+} 
 
-      // Get user data from localStorage
-      const userData = JSON.parse(localStorage.getItem('user') || '{}');
-      if (!userData._id) {
-        console.error("No user ID found");
-        navigate('/profile');
-        return;
-      }
-      
-      const game = new Phaser.Game(joinedGameConfig); 
-      console.log("Starting JoinedScene with user:", userData._id);
-      game.scene.start('JoinedScene', { 
-        spaceId,
-        spaceData,
-        userId: userData._id,
-        apiUrl: import.meta.env.VITE_REACT_APP_API_URL,
-        navigate
+interface JoinedState {
+  spaceData: { spaceElements: SpaceElement[] };
+  elements: Array<Element>; 
+}
+
+export const JoinedSpace: React.FC = () => {
+  const { spaceId } = useParams<{ spaceId: string }>();
+  const navigate     = useNavigate();
+  const location     = useLocation() as { state: JoinedState };
+  const user         = JSON.parse(localStorage.getItem('user') || '{}');
+
+  const [spaceData, setSpaceData]   = useState<JoinedState['spaceData'] | null>(
+    location.state?.spaceData ?? null
+  );
+  const [elements, setElements]  = useState<JoinedState['elements'] | null>(
+    location.state?.elements ?? null
+  );
+  const [isFetching, setIsFetching] = useState<boolean>(!location.state);
+
+  // If we have no state, fetch both endpoints
+  useEffect(() => {
+    if (!spaceId) {
+      navigate('/profile');
+      return;
+    }
+    if (!user._id) {
+      navigate('/profile');
+      return;
+    }
+    if (spaceData && elements) {
+      // already have everything → skip fetching
+      setIsFetching(false);
+      return;
+    }
+
+    // fetch missing data
+    const token = localStorage.getItem('token');
+    setIsFetching(true);
+
+    Promise.all([
+      axios.get(`${API_URL}/space/join/${spaceId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      }),
+      axios.get(`${API_URL}/space/elements`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+    ])
+      .then(([spaceRes, elemRes]) => {
+        setSpaceData(spaceRes.data);
+        setElements(elemRes.data);
+      })
+      .catch(err => {
+        console.error('Error fetching join data', err);
+        navigate(`/profile/${user._id}`);
+      })
+      .finally(() => {
+        setIsFetching(false);
       });
-    
-      // Cleanup function to destroy the game when component unmounts
-      return () => {
-        game.destroy(true);
-      };
-    }, [spaceData, navigate, spaceId]);  
-  
-    return (
-      <div id="game-container" style={{ width: '800px', height: '600px' }}></div>
-    );
+  }, [spaceId, user._id, spaceData, elements, navigate]);
 
+
+  // Once we have both spaceData & elements, launch Phaser: 
+  useEffect(() => {
+    if (isFetching) return;
+    if (!spaceData || !elements) return;
+
+    const game = new Phaser.Game(joinedGameConfig);
+    game.scene.start('JoinedScene', {
+      userId:    user._id,
+      spaceId,
+      apiUrl:    API_URL,
+      spaceData,
+      elements
+    });
+
+    return () => {
+      game.destroy(true);
+    };
+  }, [isFetching, spaceData, elements, user._id, spaceId]);
+
+  if (isFetching || !spaceData || !elements) {
+    return <div>Loading space…</div>;
+  }
+
+  return <div id="game-container" style={{ width: 800, height: 600 }} />;
 };
- 
-  
+
 export default JoinedSpace;
-
-

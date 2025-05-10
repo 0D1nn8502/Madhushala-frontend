@@ -3,32 +3,77 @@ import axios from 'axios';
 import { Link } from 'react-router-dom';
 import './styles/Profile.css'; 
 import { useNavigate } from 'react-router-dom';
-import { useSpace } from '../context/SpaceContext';
+import { useParams } from 'react-router-dom';
+
+
+interface UserProfile {
+  _id: string; 
+  username: string; 
+  image: string; 
+  avatar?: string; 
+  description: string; 
+  spaces?: Array<{spaceId: string; spaceName: string}>;  
+}
+
+const API_URL = import.meta.env.VITE_REACT_APP_API_URL; 
 
 
 export const Profile: React.FC = () => {
-  const navigate = useNavigate();  
-  const [user, setUser] = useState<any>(null); 
-  const [spaces, setSpaces] = useState<any[]>([]); 
-  const {setSpaceData} = useSpace(); 
+  const { userId: paramId } = useParams<{userId?: string}>();   
   
-  const fetchUserProfile = async() => {
-    const token = localStorage.getItem('token'); 
+  // Pull own ID // 
+  const stored = localStorage.getItem('user'); 
+  const meId = stored? (JSON.parse(stored) as UserProfile)._id : undefined; 
 
-    try {
-      const response = await axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/user/profile`, {
-        headers: {
-          "Authorization": `Bearer ${token}` 
-        }
-      }); 
+  const userId = paramId ?? meId; // If no paramId, then own id // 
+  
+  const navigate = useNavigate();  
+  const [user, setUser] = useState <UserProfile | null> (null); 
+  const [spaces, setSpaces] = useState <UserProfile['spaces']> ([]);  
 
-      localStorage.setItem('user', JSON.stringify(response.data)); 
-      setUser(response.data); 
-      setSpaces(response.data.spaces || []);  
 
-    } catch (error) {
-      console.error("Error fetching user profile"); 
+  useEffect(() => {
+    if (!userId) {
+      navigate('/'); 
     }
+  }, [userId, navigate]);
+
+  
+  useEffect(() => {
+    if (!userId) return;
+    
+    const endpoint = `${API_URL}/user/profile/${userId}`; 
+
+    const fetchUserProfile = async() => {
+      const token = localStorage.getItem('token'); 
+  
+      try {
+        const response = await axios.get(endpoint, {
+          headers: {
+            "Authorization": `Bearer ${token}` 
+          }
+        }); 
+  
+        const data = response.data as UserProfile; 
+        setUser(data); 
+        setSpaces(data.spaces || []);  
+  
+      } catch (error) {
+        console.error("Error fetching user profile", error); 
+  
+        // If unauthorized Or not found // 
+        if (paramId) { 
+          navigate('/');  
+        }
+      }
+    }
+
+    fetchUserProfile(); 
+    
+  }, [userId]);   
+
+  if (!user) {
+    return <div> Loading profile ...  </div>
   }
 
   function changeProfilePic() {
@@ -37,9 +82,25 @@ export const Profile: React.FC = () => {
 
   async function createSpace () {
 
-    try {
-      // Pass Callback to update local storage after space creation? // 
-      navigate('/space');    
+    try { 
+      const token = localStorage.getItem('token');
+
+      // Fetch the element definitions you need in SpaceScene // 
+      const { data: elements } = await axios.get<
+        Array<{ _id: string; name: string; imageUrl: string; scale?: number }>
+      >(`${API_URL}/space/elements`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      console.log( "API URL : ", API_URL); 
+  
+      // Navigate into /space with `elements` in state // 
+      navigate('/space', {
+        state: {
+          apiUrl: API_URL, 
+          elements
+        }
+      }); 
       
     } catch (error) {
       console.error("Error creating space: ", error) 
@@ -53,78 +114,170 @@ export const Profile: React.FC = () => {
 
 
   async function joinSpace(spaceId:string) {
-    const token = localStorage.getItem('token'); 
+    
     try {
-      const response = await axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/space/join/${spaceId}`, {
-        headers: {
-          "Authorization": `Bearer ${token}` 
+      const token = localStorage.getItem('token'); 
+      
+      const res = await axios.get(
+        `${API_URL}/space/join/${spaceId}`, 
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, 
+          } 
         }
-    });
+      )
 
-    setSpaceData(response.data);  
-    navigate(`/join/${spaceId}`); // or window.location.href ? // 
+      const spaceData = res.data; 
+      
+      const elemres = await axios.get(`${API_URL}/space/elements`, {
+        headers: {Authorization: `Bearer ${token}`} 
+      }); 
+      const elements = elemres.data as Array<{
+        _id: string; 
+        name: string; 
+        imageUrl: string; 
+        scale?: number; 
+      }>; 
+
+      // Navigate with space and element data (can be made better) // 
+      navigate(`/join/${spaceId}`, {
+        state: {
+          spaceData: spaceData, 
+          elements: elements 
+        }
+      })
 
     } catch (error) {
-      console.error("Error joining space:", error); 
+      console.error("Spacedata not found"); 
+      navigate('/profile'); 
+    }
+    
+  }
+
+  async function editSpace(spaceId:string) { 
+    try {
+      const token = localStorage.getItem('token'); 
+      
+      const res = await axios.get(
+        `${API_URL}/space/join/${spaceId}`, 
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, 
+          } 
+        }
+      )
+
+      const spaceData = res.data; 
+      
+      const elemres = await axios.get(`${API_URL}/space/elements`, {
+        headers: {Authorization: `Bearer ${token}`} 
+      }); 
+      const elements = elemres.data as Array<{
+        _id: string; 
+        name: string; 
+        imageUrl: string; 
+        scale?: number;
+      }>; 
+
+      // Navigate with space and element data (can be made better) // 
+      navigate(`/edit/${spaceId}`, {
+        state: {
+          spaceData: spaceData, 
+          elements: elements 
+        }
+      })
+
+    } catch (error) {
+      console.error("Spacedata not found"); 
+      navigate('/profile'); 
     }
   }
 
 
-  useEffect(() => {
-    // Fetch user profile from the backend when component mounts
-    fetchUserProfile();
-  }, []); 
+  async function deleteSpace(spaceId:string, spaceName:string) {
+    if (!window.confirm(`Delete space "${spaceName}" permanently?`)) {
+      return;
+    }
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(
+        `${API_URL}/space/${spaceId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      // Remove from local state // 
+      setSpaces(spaces!.filter(s => s.spaceId !== spaceId));
 
-  if (!user) {
-    return <div> Loading ... </div>
+    } catch (err) {
+      console.error('Error deleting space:', err);
+      alert('Failed to delete space. Please try again.');
+    }
   }
 
-  // AWS bucket image url provided for user image / default //  
   
   return (
-    <div className="profile-container"> 
+    <div className="profile-container">
+      <h2>{user.username}</h2>
+      <div className="image-container">
+        <img src={user.image} alt="Profile" />
+      </div>
 
-      <h2> {user.username} </h2>
-      <div className='image-container'> 
-        <img src={user.image} alt="Profile" />   
-      </div>  
+      {/* Only show edit controls when viewing your own profile */} 
 
-      <button onClick={changeProfilePic}> Change </button> 
+      
 
-      <p> Description: {" Enter a short description "} </p>
+      {!paramId && (
+        <>
+          <button onClick={() => console.log('Change Picture')}>Change Picture</button> 
 
-      <button onClick={changeDescription}> Change </button> 
+          <div className='descriptionContainer'>
 
-      <h2>Your Spaces</h2>
+          <p>Description: {user.description || 'Enter a short description'}</p>
+          <button onClick={() => console.log('Change Description')}>Change Description</button> <br></br> 
 
-      {spaces && spaces.length > 0? (
-      <ul>
+          </div> 
+          <button
+            onClick={createSpace} 
+            disabled={!!user.spaces && user.spaces.length > 0}
+          >
+            Create Space
+          </button>
+        </>
+      )}
 
-        {spaces.map((space, index) => (
+      <div className='spaceContainer'>
+      <h2>{paramId ? `${user.username}'s Spaces` : 'Your Spaces'}</h2>
+      {spaces && spaces.length > 0 ? (
+        <ul>
+          {spaces.map((space, idx) => (
+            <li key={idx}>
 
-            <li key={index}>
-                <button onClick={() => joinSpace(space.spaceId)}>
-                  {space.spaceName}
-                </button>
+              <button
+                onClick={() => joinSpace(space.spaceId) } 
+              >
+                {space.spaceName}
+              </button>
+
+            {!paramId && (
+            <button
+              style={{ background: 'transparent', color: '#f00', border: 'none', cursor: 'pointer' }} onClick={ () => {deleteSpace(space.spaceId, space.spaceName)}}> 🗑️ </button>
+              )}
+
             </li>
 
-        ))}    
-
-      </ul>   
-
+          ))}
+        </ul>
       ) : (
-        <p>No spaces found. Create a new space to get started!</p>
-      )} 
+        <p>No spaces found.</p>
+      )}
 
-      <p> Discover online spaces! <Link to={'/browse'}> Discover </Link>  </p> 
+      </div>  
 
-      <button 
-      onClick={createSpace}
-      disabled={user.spaces.length > 0}
-      > 
-       
-      Create space </button>  
-
+      {/* Only show browse link when on your own profile */}
+      {!paramId && (
+        <p>
+          Discover online spaces! <Link to="/browse">Discover</Link>
+        </p>
+      )}
     </div>
   );
 };

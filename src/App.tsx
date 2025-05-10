@@ -18,7 +18,7 @@ function App() {
 
       <Routes> 
         <Route path = "/" element = {<Landing/>}/>  
-        <Route path="/profile" element={<Profile/>} /> 
+        <Route path="/profile/:userId?" element={<Profile/>} /> 
         <Route path="/space" element={<Space/>} />  
         <Route path="/join/:spaceId" element={<JoinedSpace/>} /> 
         <Route path="/browse" element={<BrowseSpaces/>} /> 
